@@ -1,0 +1,3 @@
+[submodule "src/modules/tracie-admin"]
+	path = src/modules/tracie-admin
+	url = https://github.com/hieunc229/tracie-admin.git
