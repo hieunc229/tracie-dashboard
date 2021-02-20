@@ -4,14 +4,14 @@ import { createMuiTheme } from '@material-ui/core/styles';
 
 
 import {
-    Paper, InputBase, IconButton, Select,
+    IconButton, Select,
     MenuItem, FormControl, InputLabel, Typography,
     TextField, FormControlLabel, Switch,
     Divider
 } from '@material-ui/core';
 import { ArrowForward as SubmitIcon, Inbox } from "@material-ui/icons";
 import TracieAdmin from "../utils/tc";
-import { TracieQueryInterval } from "../../modules/tracie-admin/src/TracieAdmin";
+import { TracieQueryInterval, TracieQueryResults } from "../../modules/tracie-admin/src/TracieAdmin";
 
 import { cloneDeep } from "lodash";
 import cls from "./styles.module.scss";
@@ -19,29 +19,32 @@ import ViewSavedPresetMenu from "./ViewPresetMenu";
 import SavedPreset, { SavedPresetProps } from "../utils/savedPreset";
 import ViewGraph from "./ViewGraph";
 
-export default class HomePage extends React.Component {
+import { withSnackbar } from 'notistack';
+import ChipInput from "material-ui-chip-input";
+
+class HomePage extends React.Component {
 
     state: {
         data?: any,
-        keyword?: string,
+        keyword?: string[],
         interval: TracieQueryInterval,
         start?: Date,
         end?: Date,
-        period: "custom" | "all" | "180" | "90" | "30",
+        period: "custom" | "all" | "180" | "90" | "30" | "7",
         intervalValue?: number,
         valueIncreasing: boolean
-    } = { interval: "day", period: "all", valueIncreasing: false };
+    } = { interval: "day", period: "30", valueIncreasing: false };
 
-    data?: any;
+    data?: TracieQueryRepresentData[];
 
     private handleSubmit = (ev: React.FormEvent) => {
         ev.preventDefault();
         // @ts-ignore
-        const value = ev.currentTarget.keyword.value;
+        // const value = ev.currentTarget.keyword.value;
 
-        this.setState({ keyword: value }, () => {
-            this.fetchData();
-        });
+        // this.setState({ keyword: value }, () => {
+        this.fetchData();
+        // });
     }
 
     private fetchData = () => {
@@ -74,6 +77,15 @@ export default class HomePage extends React.Component {
                 .then(rs => {
                     this.data = transformData(rs);
                     this.setGraphData();
+                })
+                .catch(err => {
+                    console.log(err);
+                    let errMessage = err.toString();
+                    if (errMessage.indexOf(`Failed to fetch`)) {
+                        errMessage = `Unable to reach server`;
+                    }
+                    // @ts-ignore
+                    this.props.enqueueSnackbar(errMessage, { variant: "error" });
                 })
         }
     }
@@ -145,6 +157,7 @@ export default class HomePage extends React.Component {
                             onChange={this.handleChange}
                         >
                             <MenuItem value="all">All time</MenuItem>
+                            <MenuItem value="7">Last 7 days</MenuItem>
                             <MenuItem value="30">Last 30 days</MenuItem>
                             <MenuItem value="90">Last 90 days</MenuItem>
                             <MenuItem value="180">Last 180 days</MenuItem>
@@ -214,19 +227,26 @@ export default class HomePage extends React.Component {
                     </>}
                 </div>
                 <div className={cls.flexRow}>
-                    <Paper onSubmit={this.handleSubmit} style={classes.form} component="form">
-                        <InputBase
+
+                    <form onSubmit={this.handleSubmit} style={classes.form}>
+
+                        <ChipInput
+                            placeholder="Enter event name"
+                            defaultValue={this.state.keyword}
+                            onChange={chips => this.handleValueChange({ target: { value: chips, name: "keyword" } })}
+                        />
+                        {/* <InputBase
                             name="keyword"
                             onChange={this.handleValueChange}
                             value={this.state.keyword}
                             style={classes.input}
                             placeholder="Enter event name"
                             inputProps={{ 'aria-label': 'enter event name' }}
-                        />
+                        /> */}
                         <IconButton type="submit" style={classes.iconButton} aria-label="search">
                             <SubmitIcon />
                         </IconButton>
-                    </Paper>
+                    </form>
                     <ViewSavedPresetMenu
                         handleSave={this.savePreset}
                         handleSelect={this.setPreset}
@@ -235,10 +255,7 @@ export default class HomePage extends React.Component {
             </div>
             {
                 data ?
-                    <ViewGraph
-                        name={this.state.keyword}
-                        data={this.state.data}
-                    />
+                    <ViewGraph data={this.state.data} />
                     :
                     <div className={cls.emptyBox}>
                         <Inbox style={{ fontSize: 82 }} />
@@ -250,6 +267,9 @@ export default class HomePage extends React.Component {
         </>
     }
 }
+
+// @ts-ignore
+export default withSnackbar(HomePage);
 const theme = createMuiTheme();
 
 const classes: { [name: string]: CSSProperties } = {
@@ -261,7 +281,6 @@ const classes: { [name: string]: CSSProperties } = {
         padding: 10,
     },
     form: {
-        maxWidth: 280,
         display: 'flex',
         flexDirection: 'row'
     },
@@ -275,21 +294,35 @@ const classes: { [name: string]: CSSProperties } = {
     }
 };
 
-function transformData(input: any) {
-    return Object.keys(input).map((k, x) => {
+function transformData(input: TracieQueryResults): TracieQueryRepresentData[] {
+    return input.map(item => {
         return {
-            x: new Date(k),
-            y: input[k]
+            name: item.name,
+            data: Object.keys(item.result).map((k, x) => {
+                return {
+                    x: new Date(k),
+                    y: item.result[k]
+                }
+            })
         }
     })
 }
 
-function transformDataValueIncreasing(input: any) {
+function transformDataValueIncreasing(input: TracieQueryRepresentData[]) {
     let cloned = cloneDeep(input);
     let total = 0;
-    Object.keys(cloned).forEach(k => {
-        cloned[k].y = total += cloned[k].y;
+    cloned.forEach(set => {   
+        total = 0;
+        set.data.forEach(item => {
+            item.y = total += item.y;
+        })
     })
 
     return cloned;
+}
+
+
+export type TracieQueryRepresentData = {
+    name: string,
+    data: { x: Date, y: number }[]
 }

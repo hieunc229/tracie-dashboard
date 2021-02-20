@@ -57,7 +57,10 @@ export default function ViewSavedPresetMenu(props: Props) {
                 {
                     presets.length ?
                         presets.map(preset =>
-                            <ViewMenuItem handleClose={handleClose} handleSelect={props.handleSelect} item={preset} />) :
+                            <ViewMenuItem handleClose={handleClose} 
+                                handleSelect={props.handleSelect} 
+                                key={`query-preset-${preset.id}`}
+                                item={preset} />) :
                         <ListItem>
                             <ListItemText primary="No presets" />
                         </ListItem>

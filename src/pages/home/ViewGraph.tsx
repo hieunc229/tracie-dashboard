@@ -1,12 +1,14 @@
 import React, { CSSProperties } from "react";
 import { createMuiTheme, Paper } from "@material-ui/core";
 import Chart from "chart.js";
+import { TracieQueryRepresentData } from "./HomePage";
 
+export type Dataset = { x: any, y: number }[];
+export type DatasetCollection = { [name: string]: Dataset };
 
 type Props = {
-    data: any[],
-    hint?: any,
-    name?: string
+    data: TracieQueryRepresentData[],
+    hint?: any
 }
 
 export default class ViewGraph extends React.Component<Props> {
@@ -14,6 +16,7 @@ export default class ViewGraph extends React.Component<Props> {
     canvas?: HTMLCanvasElement | null;
     chart?: Chart;
     componentDidMount() {
+        console.log(this.props.data);
         this.setData();
     }
 
@@ -29,10 +32,7 @@ export default class ViewGraph extends React.Component<Props> {
         }
 
         if (this.canvas) {
-
-            let labels = this.props.data.map(k => k.x);
-            let data = this.props.data.map(k => k.y)
-            this.chart = new Chart(this.canvas, getConfig({ data, labels, name: this.props.name }))
+            this.chart = new Chart(this.canvas, getConfig(this.props.data))
         }
     }
 
@@ -58,21 +58,43 @@ const classes: { [name: string]: CSSProperties } = {
     }
 }
 
-function getConfig(opts: { labels?: (string | number)[], data: number[], name?: string }) {
-    let { labels, data, name } = opts;
+const colors = [
+    `#ec407a`,
+    `#66bb6a`,
+    `#36a2eb`, 
+    `#4bc0c0`,
+    `#303f9f`,
+    `#ef5350`,
+    `#ab47bc`,
+    `#7e57c2`,
+    `#42a5f5`,
+    `#ffa726`,
+    `#333538`,
+];
+
+function getDatasets(options: TracieQueryRepresentData[]) {
+    return options.map((opt, i) => {
+        return {
+            label: opt.name,
+            borderColor: colors[i],
+            backgroundColor: colors[i],
+            data: opt.data.map(i => i.y),
+            pointRadius: 0,
+            fill: false,
+            lineTension: 0.1,
+        }
+    });
+}
+
+function getConfig(data: TracieQueryRepresentData[]) {
+
+    let labels = getLabels(data);
+
     var config: Chart.ChartConfiguration = {
         type: 'line',
         data: {
             labels: labels,
-            datasets: [{
-                label: name || 'Volume',
-                borderColor: "#303f9f",
-                backgroundColor: "#303f9f",
-                data,
-                pointRadius: 0,
-                fill: false,
-                lineTension: 0.1,
-            }]
+            datasets: getDatasets(data)
         },
         options: {
             animation: {
@@ -110,4 +132,11 @@ function getConfig(opts: { labels?: (string | number)[], data: number[], name?: 
     };
 
     return config;
+}
+
+function getLabels(data: TracieQueryRepresentData[]): Date[] {
+
+    // Only take labels from the first set
+    // since all sets of TracieQueryRepresentData have the same `x` values
+    return !data.length ? [] : data[0].data.map(item => new Date(item.x));
 }

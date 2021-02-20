@@ -3,6 +3,7 @@ import "./styles.scss";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import HomePage from './pages/home';
 import { makeStyles } from '@material-ui/core/styles';
+import { SnackbarProvider } from "notistack";
 
 import {
   AppBar,
@@ -15,24 +16,25 @@ function App() {
 
   const classes = useStyles();
 
-  return <div className={classes.root}>
-    <Router>
-
-      <AppBar color="primary" position="static">
-        <Toolbar>
-          <Typography variant="h6" className={classes.title}>
-            Tracie Dashboard
+  return <SnackbarProvider>
+    <div className={classes.root}>
+      <Router>
+        <AppBar color="primary" position="static">
+          <Toolbar>
+            <Typography variant="h6" className={classes.title}>
+              Tracie Dashboard
           </Typography>
-        </Toolbar>
-      </AppBar>
+          </Toolbar>
+        </AppBar>
 
-      <Container className={classes.body} maxWidth="lg">
-        <Switch>
-          <Route path="/" component={HomePage} />
-        </Switch>
-      </Container>
-    </Router>
-  </div>
+        <Container className={classes.body} maxWidth="lg">
+          <Switch>
+            <Route path="/" component={HomePage} />
+          </Switch>
+        </Container>
+      </Router>
+    </div>
+  </SnackbarProvider>
 }
 
 
