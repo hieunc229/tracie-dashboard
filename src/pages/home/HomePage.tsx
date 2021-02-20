@@ -1,6 +1,16 @@
-import React, { CSSProperties } from "react";
+import React from "react";
 
-import { createMuiTheme } from '@material-ui/core/styles';
+import cls from "./styles.module.scss";
+
+import ViewGraph from "./ViewGraph";
+import TracieAdmin from "../utils/tc";
+import ChipInput from "material-ui-chip-input";
+import ViewSavedPresetMenu from "./ViewPresetMenu";
+import SavedPreset, { SavedPresetProps } from "../utils/savedPreset";
+
+import { withSnackbar } from 'notistack';
+import { ArrowForward as SubmitIcon, Inbox } from "@material-ui/icons";
+import { TracieQueryInterval } from "../../modules/tracie-admin/src/TracieAdmin";
 
 
 import {
@@ -9,42 +19,28 @@ import {
     TextField, FormControlLabel, Switch,
     Divider
 } from '@material-ui/core';
-import { ArrowForward as SubmitIcon, Inbox } from "@material-ui/icons";
-import TracieAdmin from "../utils/tc";
-import { TracieQueryInterval, TracieQueryResults } from "../../modules/tracie-admin/src/TracieAdmin";
 
-import { cloneDeep } from "lodash";
-import cls from "./styles.module.scss";
-import ViewSavedPresetMenu from "./ViewPresetMenu";
-import SavedPreset, { SavedPresetProps } from "../utils/savedPreset";
-import ViewGraph from "./ViewGraph";
+import { TracieQueryRepresentData, transformDataValueIncreasing, transformData } from "../utils/transform";
 
-import { withSnackbar } from 'notistack';
-import ChipInput from "material-ui-chip-input";
+type State = {
+    data?: any,
+    keyword?: string[],
+    interval: TracieQueryInterval,
+    start?: Date,
+    end?: Date,
+    period: "custom" | "all" | "180" | "90" | "30" | "7",
+    intervalValue?: number,
+    valueIncreasing: boolean
+};
 
 class HomePage extends React.Component {
 
-    state: {
-        data?: any,
-        keyword?: string[],
-        interval: TracieQueryInterval,
-        start?: Date,
-        end?: Date,
-        period: "custom" | "all" | "180" | "90" | "30" | "7",
-        intervalValue?: number,
-        valueIncreasing: boolean
-    } = { interval: "day", period: "30", valueIncreasing: false };
-
+    state: State = { interval: "day", period: "30", valueIncreasing: false };
     data?: TracieQueryRepresentData[];
 
     private handleSubmit = (ev: React.FormEvent) => {
         ev.preventDefault();
-        // @ts-ignore
-        // const value = ev.currentTarget.keyword.value;
-
-        // this.setState({ keyword: value }, () => {
         this.fetchData();
-        // });
     }
 
     private fetchData = () => {
@@ -102,10 +98,10 @@ class HomePage extends React.Component {
     private handleChange = (ev: any) => {
 
         const target = ev.target as HTMLInputElement;
-
+        
         // @ts-ignore
         if (target.value !== this.state[target.name]) {
-
+            
             this.setState({
                 [target.name]: target.type === "checkbox" ? target.checked : target.value
             }, () => {
@@ -146,8 +142,8 @@ class HomePage extends React.Component {
         const { data, interval, period, intervalValue } = this.state;
 
         return <>
-            <div style={classes.bar}>
-                <div style={classes.barGroup}>
+            <div className={cls.bar}>
+                <div className={cls.barGroup}>
                     <FormControl>
                         <InputLabel id="period-label">Period</InputLabel>
                         <Select
@@ -164,7 +160,28 @@ class HomePage extends React.Component {
                             <MenuItem value="custom">Custom</MenuItem>
                         </Select>
                     </FormControl>
+                    {period === "custom" && <>
+                        <Divider orientation="vertical" />
+                        <TextField
+                            name="start"
+                            label="Start Date"
+                            type={interval === "minute" ? "datetime-local" : "date"}
+                            onBlur={this.handleChange}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
 
+                        <TextField
+                            name="end"
+                            label="End Date"
+                            type={interval === "minute" ? "datetime-local" : "date"}
+                            onBlur={this.handleChange}
+                            InputLabelProps={{
+                                shrink: true,
+                            }}
+                        />
+                    </>}
                     <Divider orientation="vertical" />
 
                     <FormControl>
@@ -202,48 +219,17 @@ class HomePage extends React.Component {
                         />}
                         label="Show value increasing"
                     />
-
-                    {period === "custom" && <>
-                        <Divider orientation="vertical" />
-                        <TextField
-                            name="start"
-                            label="Start Date"
-                            type={interval === "minute" ? "datetime-local" : "date"}
-                            onBlur={this.handleChange}
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                        />
-
-                        <TextField
-                            name="end"
-                            label="End Date"
-                            type={interval === "minute" ? "datetime-local" : "date"}
-                            onBlur={this.handleChange}
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                        />
-                    </>}
                 </div>
-                <div className={cls.flexRow}>
 
-                    <form onSubmit={this.handleSubmit} style={classes.form}>
+                <div className={cls.flexRow}>
+                    <form onSubmit={this.handleSubmit} className={cls.form}>
 
                         <ChipInput
                             placeholder="Enter event name"
                             defaultValue={this.state.keyword}
                             onChange={chips => this.handleValueChange({ target: { value: chips, name: "keyword" } })}
                         />
-                        {/* <InputBase
-                            name="keyword"
-                            onChange={this.handleValueChange}
-                            value={this.state.keyword}
-                            style={classes.input}
-                            placeholder="Enter event name"
-                            inputProps={{ 'aria-label': 'enter event name' }}
-                        /> */}
-                        <IconButton type="submit" style={classes.iconButton} aria-label="search">
+                        <IconButton type="submit" className={cls.iconButton} aria-label="search">
                             <SubmitIcon />
                         </IconButton>
                     </form>
@@ -270,59 +256,3 @@ class HomePage extends React.Component {
 
 // @ts-ignore
 export default withSnackbar(HomePage);
-const theme = createMuiTheme();
-
-const classes: { [name: string]: CSSProperties } = {
-    input: {
-        marginLeft: theme.spacing(2),
-        flex: 1,
-    },
-    iconButton: {
-        padding: 10,
-    },
-    form: {
-        display: 'flex',
-        flexDirection: 'row'
-    },
-    barGroup: {
-        display: `flex`,
-        columnGap: `1.6em`,
-    },
-    bar: {
-        display: `flex`,
-        justifyContent: `space-between`
-    }
-};
-
-function transformData(input: TracieQueryResults): TracieQueryRepresentData[] {
-    return input.map(item => {
-        return {
-            name: item.name,
-            data: Object.keys(item.result).map((k, x) => {
-                return {
-                    x: new Date(k),
-                    y: item.result[k]
-                }
-            })
-        }
-    })
-}
-
-function transformDataValueIncreasing(input: TracieQueryRepresentData[]) {
-    let cloned = cloneDeep(input);
-    let total = 0;
-    cloned.forEach(set => {   
-        total = 0;
-        set.data.forEach(item => {
-            item.y = total += item.y;
-        })
-    })
-
-    return cloned;
-}
-
-
-export type TracieQueryRepresentData = {
-    name: string,
-    data: { x: Date, y: number }[]
-}

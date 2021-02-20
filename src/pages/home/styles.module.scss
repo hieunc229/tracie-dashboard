@@ -18,8 +18,26 @@
   }
 }
 
-
 .flexRow {
   display: flex;
   flex-direction: row;
+}
+
+.iconButton {
+  padding: 10px
+}
+
+.form {
+  display: flex;
+  flex-direction: row
+}
+
+.barGroup {
+  display: flex;
+  column-gap: 1.6em,
+}
+
+.bar {
+  display: flex;
+  justify-content: space-between
 }

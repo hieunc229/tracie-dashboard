@@ -1,7 +1,9 @@
 import React, { CSSProperties } from "react";
-import { createMuiTheme, Paper } from "@material-ui/core";
+
 import Chart from "chart.js";
-import { TracieQueryRepresentData } from "./HomePage";
+
+import { createMuiTheme, Paper } from "@material-ui/core";
+import { TracieQueryRepresentData } from "../utils/transform";
 
 export type Dataset = { x: any, y: number }[];
 export type DatasetCollection = { [name: string]: Dataset };
@@ -15,8 +17,8 @@ export default class ViewGraph extends React.Component<Props> {
 
     canvas?: HTMLCanvasElement | null;
     chart?: Chart;
+
     componentDidMount() {
-        console.log(this.props.data);
         this.setData();
     }
 
@@ -60,8 +62,8 @@ const classes: { [name: string]: CSSProperties } = {
 
 const colors = [
     `#ec407a`,
-    `#66bb6a`,
     `#36a2eb`, 
+    `#66bb6a`,
     `#4bc0c0`,
     `#303f9f`,
     `#ef5350`,
