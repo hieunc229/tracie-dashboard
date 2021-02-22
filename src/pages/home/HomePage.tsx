@@ -9,18 +9,19 @@ import ViewSavedPresetMenu from "./ViewPresetMenu";
 import SavedPreset, { SavedPresetProps } from "../utils/savedPreset";
 
 import { withSnackbar } from 'notistack';
-import { ArrowForward as SubmitIcon, Inbox } from "@material-ui/icons";
+import { ArrowForward } from "@material-ui/icons";
 import { TracieQueryInterval } from "../../modules/tracie-admin/src/TracieAdmin";
 
 
 import {
     IconButton, Select,
-    MenuItem, FormControl, InputLabel, Typography,
+    MenuItem, FormControl, InputLabel,
     TextField, FormControlLabel, Switch,
     Divider
 } from '@material-ui/core';
 
 import { TracieQueryRepresentData, transformDataValueIncreasing, transformData } from "../utils/transform";
+import { randomData } from "../../demo/generator";
 
 type State = {
     data?: any,
@@ -43,7 +44,11 @@ class HomePage extends React.Component {
         this.fetchData();
     }
 
-    private fetchData = () => {
+    private clearData = () => {
+        this.data = undefined;
+        this.setState({ data: undefined });
+    }
+    private fetchData = async () => {
         if (this.state.keyword) {
 
             let start = this.state.start, end = this.state.end;
@@ -64,25 +69,26 @@ class HomePage extends React.Component {
                     start = start.toJSON();
             }
 
-            TracieAdmin.query(this.state.keyword, {
-                $interval: this.state.interval,
-                $start: start,
-                $end: end,
-                $intervalValue: this.state.intervalValue
-            })
-                .then(rs => {
-                    this.data = transformData(rs);
-                    this.setGraphData();
-                })
-                .catch(err => {
-                    console.log(err);
-                    let errMessage = err.toString();
-                    if (errMessage.indexOf(`Failed to fetch`)) {
-                        errMessage = `Unable to reach server`;
-                    }
-                    // @ts-ignore
-                    this.props.enqueueSnackbar(errMessage, { variant: "error" });
-                })
+            try {
+                const keywords = this.state.keyword;
+                let options = {
+                    $interval: this.state.interval,
+                    $start: start,
+                    $end: end,
+                    $intervalValue: this.state.intervalValue
+                };
+                let rs = process.env.REACT_APP_USE_SAMPLE_DATA === "true" ? randomData(keywords, options) : await TracieAdmin.query(keywords, options);
+                this.data = transformData(rs as any);
+                this.setGraphData();
+            } catch (err) {
+                console.log(err);
+                let errMessage = err.toString();
+                if (errMessage.indexOf(`Failed to fetch`)) {
+                    errMessage = `Unable to reach server`;
+                }
+                // @ts-ignore
+                this.props.enqueueSnackbar(errMessage, { variant: "error" });
+            }
         }
     }
 
@@ -98,10 +104,10 @@ class HomePage extends React.Component {
     private handleChange = (ev: any) => {
 
         const target = ev.target as HTMLInputElement;
-        
+
         // @ts-ignore
         if (target.value !== this.state[target.name]) {
-            
+
             this.setState({
                 [target.name]: target.type === "checkbox" ? target.checked : target.value
             }, () => {
@@ -139,7 +145,7 @@ class HomePage extends React.Component {
     }
 
     render() {
-        const { data, interval, period, intervalValue } = this.state;
+        const { interval, period, intervalValue } = this.state;
 
         return <>
             <div className={cls.bar}>
@@ -223,33 +229,24 @@ class HomePage extends React.Component {
 
                 <div className={cls.flexRow}>
                     <form onSubmit={this.handleSubmit} className={cls.form}>
-
                         <ChipInput
+
                             placeholder="Enter event name"
                             defaultValue={this.state.keyword}
                             onChange={chips => this.handleValueChange({ target: { value: chips, name: "keyword" } })}
                         />
                         <IconButton type="submit" className={cls.iconButton} aria-label="search">
-                            <SubmitIcon />
+                            <ArrowForward />
                         </IconButton>
                     </form>
                     <ViewSavedPresetMenu
+                        handleClear={this.clearData}
                         handleSave={this.savePreset}
                         handleSelect={this.setPreset}
                     />
                 </div>
             </div>
-            {
-                data ?
-                    <ViewGraph data={this.state.data} />
-                    :
-                    <div className={cls.emptyBox}>
-                        <Inbox style={{ fontSize: 82 }} />
-                        <Typography variant="body1" >
-                            Enter an event name to display graph
-                    </Typography>
-                    </div>
-            }
+            <ViewGraph data={this.state.data} />
         </>
     }
 }

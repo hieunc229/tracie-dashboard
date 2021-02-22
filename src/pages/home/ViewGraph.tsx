@@ -1,15 +1,17 @@
 import React, { CSSProperties } from "react";
 
 import Chart from "chart.js";
+import cls from "./styles.module.scss";
 
-import { createMuiTheme, Paper } from "@material-ui/core";
+import { Inbox } from "@material-ui/icons";
 import { TracieQueryRepresentData } from "../utils/transform";
+import { createMuiTheme, Paper, Typography } from "@material-ui/core";
 
 export type Dataset = { x: any, y: number }[];
 export type DatasetCollection = { [name: string]: Dataset };
 
 type Props = {
-    data: TracieQueryRepresentData[],
+    data?: TracieQueryRepresentData[],
     hint?: any
 }
 
@@ -33,14 +35,27 @@ export default class ViewGraph extends React.Component<Props> {
             this.chart = undefined;
         }
 
-        if (this.canvas) {
+        if (this.canvas && this.props.data) {
             this.chart = new Chart(this.canvas, getConfig(this.props.data))
         }
     }
 
     render() {
+        const { data } = this.props;
         const width = Math.min(1200, window.innerWidth - 140);
         const height = Math.min(400, window.innerHeight - 260);
+
+        if (!data) {
+            return <Paper component="div" className={cls.emptyBox}>
+                <Inbox style={{ fontSize: 82 }} />
+                <Typography variant="h6" >
+                    No events selected
+                </Typography>
+                <Typography variant="body2" >
+                    Enter an event name to display graph
+            </Typography>
+            </Paper>
+        }
 
         return <Paper style={classes.graph}>
             <div>
@@ -62,7 +77,7 @@ const classes: { [name: string]: CSSProperties } = {
 
 const colors = [
     `#ec407a`,
-    `#36a2eb`, 
+    `#36a2eb`,
     `#66bb6a`,
     `#4bc0c0`,
     `#303f9f`,

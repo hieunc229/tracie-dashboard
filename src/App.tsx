@@ -20,11 +20,11 @@ function App() {
     <div className={classes.root}>
       <Router>
         <AppBar color="primary" position="static">
-          <Toolbar>
-            <Typography variant="h6" className={classes.title}>
-              Tracie Dashboard
-          </Typography>
-          </Toolbar>
+          <Container component={Toolbar} maxWidth="lg">
+              <Typography variant="h6" className={classes.title}>
+                Tracie Dashboard
+              </Typography>
+          </Container>
         </AppBar>
 
         <Container className={classes.body} maxWidth="lg">

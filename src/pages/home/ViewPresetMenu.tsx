@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { MoreVert, Delete, BookmarkOutlined } from "@material-ui/icons"
+import { MoreVert, Delete, BookmarkOutlined, DeleteOutline } from "@material-ui/icons"
 import SavedPreset, { SavedPresetProps } from '../utils/savedPreset';
 
 import {
@@ -12,6 +12,7 @@ import {
 type Props = {
     onChange?: (state: any) => void,
     handleSave?: () => void,
+    handleClear?: () => void,
     handleSelect?: (item: SavedPresetProps) => void
 }
 
@@ -54,22 +55,25 @@ export default function ViewSavedPresetMenu(props: Props) {
             }}
         >
             <List>
-                {
-                    presets.length ?
-                        presets.map(preset =>
-                            <ViewMenuItem handleClose={handleClose} 
-                                handleSelect={props.handleSelect} 
-                                key={`query-preset-${preset.id}`}
-                                item={preset} />) :
-                        <ListItem>
-                            <ListItemText primary="No presets" />
-                        </ListItem>
+                {presets.length ?
+                    presets.map(preset =>
+                        <ViewMenuItem handleClose={handleClose}
+                            handleSelect={props.handleSelect}
+                            key={`query-preset-${preset.id}`}
+                            item={preset} />) :
+                    <ListItem>
+                        <ListItemText primary="No presets" />
+                    </ListItem>
                 }
                 <Divider />
                 <ListItem button onClick={handleSave}>
                     <ListItemIcon><BookmarkOutlined /></ListItemIcon>
                     <ListItemText primary="Save preset" />
-            </ListItem>
+                </ListItem>
+                {props.handleClear && <ListItem button onClick={props.handleClear}>
+                    <ListItemIcon><DeleteOutline /></ListItemIcon>
+                    <ListItemText primary="Clear data" />
+                </ListItem>}
             </List>
         </Popover>
     </>
