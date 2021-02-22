@@ -27,7 +27,7 @@
     "eject": "react-scripts eject",
     "start-test-macos": "REACT_APP_USE_SAMPLE_DATA=true react-scripts start",
     "start-test-windows": "set 'REACT_APP_USE_SAMPLE_DATA=true' &&react-scripts start",
-    "move": "rm -rf ../tracie-server/dashboard && mv ./build ../tracie-server/dashboard"
+    "prebuild": "rm -rf ../../dashboard && mv ./build ../../dashboard"
   },
   "eslintConfig": {
     "extends": [
